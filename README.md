@@ -1,9 +1,39 @@
 # PS4: Proxy-Supervised Joint Training for Real Target Speaker Extraction
 
-Training code for the PS4 model — a BSRNN + ECAPA-TDNN Target Speaker Extraction (TSE) system fine-tuned with proxy supervision from Whisper large-v3 ASR on the [REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4) dataset.
+<p align="center">
+  <a href="https://arxiv.org/abs/2607.08111"><img src="https://img.shields.io/badge/arXiv-2607.08111-b31b1b.svg" /></a>
+  <a href="https://huggingface.co/TaurenMountain/PS4"><img src="https://img.shields.io/badge/🤗 PS4-Model-yellow" /></a>
+  <a href="https://huggingface.co/datasets/TaurenMountain/REAL-PS4"><img src="https://img.shields.io/badge/🤗 REAL--PS4-Dataset-orange" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/Python-3.10+-green.svg" /></a>
+  <a href="https://www.yijiahe.com/"><img src="https://img.shields.io/badge/Released%20by-Yijiahe-red" /></a>
+</p>
+
+**PS4** is a proxy-supervised training framework for target speaker extraction (TSE) in real conversational mixtures. 
+To support training, we construct **[REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4)**, a large-scale corpus of 71,771 samples derived from four public conversational datasets (AISHELL-4, AliMeeting, AMI, CHiME-6), covering both Chinese and English scenarios. On the [REAL-T Challenge](https://real-tse.github.io/challenge/) leaderboard, PS4 ranks **2nd overall**, achieving the **best speaker similarity and timing F1** among all submitted systems.
 
 - **Model weights:** [TaurenMountain/PS4](https://huggingface.co/TaurenMountain/PS4)
 - **Training dataset:** [TaurenMountain/REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4)
+
+## 🔥 News
+
+- **2026-07**: PS4 ranks **2nd overall** on the [REAL-T Challenge](https://real-tse.github.io/challenge/) leaderboard, achieving the **best speaker similarity (SIM) and timing F1** among all submitted systems!
+- **2026-07**: Paper [*PS4: Proxy-Supervised Joint Training for Real Target Speaker Extraction*](https://arxiv.org/abs/2607.08111) uploaded to arXiv.
+- **2026-07**: Training code and [REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4) dataset released.
+
+## 🏆 REAL-T Challenge Leaderboard
+
+Results on the official REAL-T challenge validation set. The ranking metric is a composite score across TER, F1, SIM, and DNSMOS-P808.
+
+| Rank | System | TER ↓ | F1 ↑ | SIM ↑ | DNSMOS-P808 ↑ |
+|------|--------|--------|-------|-------|----------------|
+| 🥇 1st | MERL's | **0.613** | 0.861 | 0.538 | **3.371** |
+| 🥈 2nd | **PS4 (ours)** | 0.639 | **0.871** | **0.565** | 3.128 |
+| 🥉 3rd | CARTSE's | 0.651 | 0.857 | 0.544 | 3.138 |
+| — | BSRNN\_EMB (baseline) | 0.829 | 0.829 | 0.417 | 2.875 |
+| — | BSRNN\_TFMAP (baseline) | 0.838 | 0.829 | 0.443 | 2.756 |
+
+> PS4 achieves the **best F1 (0.871)** and **best SIM (0.565)** among all submitted systems.
 
 ## Repository Structure
 
@@ -112,10 +142,13 @@ Set `loss_mode: ce | similarity | combined` in the config to select which losses
 ## Citation
 
 ```bibtex
-@article{ning2026ps4,
-  title   = {PS4: Proxy-Supervised Joint Training for Real Target Speaker Extraction},
-  author  = {Wanyi Ning and Wei Zhou and Yingpeng Li and Yinshang Guo and qianhaitao and Yiming Cheng},
-  year    = {2026},
-  publisher = {Arxiv}
+@misc{ning2026ps4,
+      title={PS4: Proxy-Supervised Joint Training for Real Target Speaker Extraction}, 
+      author={Wanyi Ning and Wei Zhou and Yingpeng Li and Yinshang Guo and Haitao Qian and Yiming Cheng},
+      year={2026},
+      eprint={2607.08111},
+      archivePrefix={arXiv},
+      primaryClass={cs.SD},
+      url={https://arxiv.org/abs/2607.08111}, 
 }
 ```
