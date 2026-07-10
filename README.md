@@ -42,12 +42,9 @@ Results on the official REAL-T challenge validation set. The ranking metric is a
 ├── train.py                          # Main training script (single-GPU & multi-GPU DDP)
 ├── resume_utils.py                   # Checkpoint resume utilities
 ├── run_train.sh                      # Training launcher (handles single/multi-GPU, resume/finetune)
-├── configs/
-│   ├── config_bsrnn_ecapa_vox1.yaml  # PS4 training config (BSRNN + ECAPA-TDNN)
-│   └── config_tfmap_context_100.yaml # Alternative TF-Map model config
-└── tests/
-    ├── test_bsrnn_model_structure.py
-    └── test_resume_utils.py
+└── configs/
+    ├── config_bsrnn_ecapa_vox1.yaml  # PS4 training config (BSRNN + ECAPA-TDNN)
+    └── config_tfmap_context_100.yaml # Alternative TF-Map model config
 ```
 
 ## Dependencies
