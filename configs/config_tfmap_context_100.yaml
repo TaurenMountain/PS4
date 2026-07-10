@@ -1,0 +1,118 @@
+# ============================================================
+# TSE-ASR 端到端训练配置 —— tfmap_context_100
+# TSE 模型：TF-GridNet / TFMap，在 VoxCeleb1 100 context 上预训练
+# ============================================================
+
+# ── 随机种子 ──────────────────────────────────────────────────
+seed: 42
+
+# ── 设备与计算 ─────────────────────────────────────────────────
+device: cuda
+enable_amp: false         # 关闭混合精度训练，统一使用 fp32
+amp_dtype: float32
+
+# ── 实验目录 ───────────────────────────────────────────────────
+exp_dir: exp/tfmap_context_100
+
+# ── 预训练模型路径 ──────────────────────────────────────────────
+# TSE 预训练模型（tfmap_context_100）
+pretrained_tse: ../REAL-TSE-Challenge/pretrained/tfmap_context_100/avg_model.pt
+
+# ASR 模型：Whisper large-v3
+whisper_model_path: /home/yuque3/nwy/models/whisper-large-v3
+
+# 从 checkpoint 恢复（留空则从预训练开始）
+resume: null
+
+# ── TSE 模型结构（与 tfmap_context_100 预训练 config 完全一致）──
+model:
+  tse_model: TFGridNet
+
+model_args:
+  tse_model:
+    feat_type: consistent
+    feature_dim: 128
+    joint_training: true
+    multi_fuse: false
+    multi_task: false
+    spk_args:
+      embed_dim: 192
+      feat_dim: 80
+      pooling_func: ASTP
+    spk_emb_dim: 192
+    spk_feat: true
+    spk_fuse_type: multiply
+    spk_model: ECAPA_TDNN_GLOB_c512
+    spk_model_freeze: true
+    # ECAPA-TDNN 说话人编码器预训练权重
+    spk_model_init: ../REAL-TSE-Challenge/wesep_real_tse/avg_model.pt
+    spksInTrain: 251
+    sr: 16000
+    use_spk_transform: false
+
+# ── 数据集 ─────────────────────────────────────────────────────
+data:
+  # 训练数据根目录
+  train_root: ../real-t_train_data
+
+  # 启用的数据集（注释掉则跳过该数据集）
+  datasets:
+    - CHiME6
+    - AMI
+    - AliMeeting
+    - AISHELL-4
+
+  # 各数据集子目录（相对于 train_root）
+  chime6_subdir:     CHiME6
+  ami_subdir:        AMI
+  alimeeting_subdir: AliMeeting
+  aishell4_subdir:   AISHELL-4
+
+  # 音频参数
+  sample_rate: 16000
+
+  # mixture 最大音频长度（采样点数，超过的样本在加载时直接跳过）
+  # Whisper 只能处理 30s 音频（480000 采样点 @ 16kHz），超长样本会被过滤
+  max_mix_len: 480000     # 30s @ 16kHz
+
+  # enrollment 最大截断长度（样本数，0=不截断）
+  max_enroll_len: 160000  # 10s
+
+  # 过滤 transcript 字符数不足的样本
+  min_transcript_len: 2
+
+  # 最大训练样本数（0 = 使用全部数据；设置正整数可快速验证训练流程）
+  max_samples: 0
+
+# ── 训练超参 ────────────────────────────────────────────────────
+num_epochs: 50
+batch_size: 1
+num_workers: 4
+save_step_interval: 500
+max_keep_ckpts: 3
+
+# 梯度裁剪
+clip_grad: 5.0
+
+# 日志打印间隔
+log_every: 20
+
+# ── Loss 模式与权重 ──────────────────────────────────────────────
+loss_mode: ce          # 可选：ce | similarity | combined
+
+lambda_ce:  1.0
+lambda_sim: 0.5
+sim_margin: 0.2
+lambda_spk: 0.0
+
+# ── 优化器 ─────────────────────────────────────────────────────
+optimizer:
+  lr: 1.0e-5
+  weight_decay: 1.0e-5
+
+# ── 调度器 ─────────────────────────────────────────────────────
+scheduler_args:
+  initial_lr:    1.0e-5
+  final_lr:      1.0e-6
+  warm_up_epoch: 1
+  warm_from_zero: false

@@ -1,0 +1,193 @@
+# ============================================================
+# PS4 Training Configuration — BSRNN + ECAPA-TDNN
+# Objective: Train the TSE model via ASR CE loss backpropagation
+#            using Whisper large-v3 as a frozen proxy supervisor.
+# ============================================================
+
+# ── Random seed ───────────────────────────────────────────────
+seed: 42
+
+# ── Device and precision ──────────────────────────────────────
+device: cuda
+enable_amp: false         # Disable mixed precision; use fp32 throughout (LSTM cuDNN does not support bf16)
+amp_dtype: float32
+
+# ── Experiment output directory ───────────────────────────────
+exp_dir: exp/bsrnn_ecapa_vox1
+
+# ── Pretrained model paths ────────────────────────────────────
+# TSE backbone pretrained on VoxCeleb1 (BSRNN + ECAPA-TDNN)
+pretrained_tse: /path/to/pretrained/bsrnn_ecapa_vox1/avg_model.pt
+
+# ASR proxy model: Whisper large-v3
+whisper_model_path: /path/to/whisper-large-v3
+
+# Speaker encoders — ResNet34-LM, identical to the evaluation-side wespeakerruntime
+#   English datasets (CHiME6 / AMI)          → voxceleb_resnet34_LM
+#   Chinese datasets (AliMeeting / AISHELL-4) → cnceleb_resnet34_LM
+spk_encoder_en_path:  /path/to/spk_emb_models/voxceleb_resnet34_LM
+spk_encoder_chs_path: /path/to/spk_emb_models/cnceleb_resnet34_LM
+
+# Resume from checkpoint (null = start from pretrained_tse)
+resume: null
+
+# ── TSE model architecture (must match bsrnn_ecapa_vox1 pretrained config) ──
+model:
+  tse_model: BSRNN
+
+model_args:
+  tse_model:
+    feat_type: consistent
+    feature_dim: 128
+    joint_training: true
+    multi_fuse: false
+    multi_task: false
+    num_repeat: 6
+    spk_args:
+      embed_dim: 192
+      feat_dim: 80
+      pooling_func: ASTP
+    spk_emb_dim: 192
+    spk_feat: false
+    spk_fuse_type: multiply
+    spk_model: ECAPA_TDNN_GLOB_c512
+    spk_model_freeze: true
+    # Pretrained weights for the ECAPA-TDNN speaker encoder inside BSRNN
+    spk_model_init: /path/to/wesep_real_tse/avg_model.pt
+    spksInTrain: 251
+    sr: 16000
+    stride: 128
+    use_spk_transform: false
+    win: 512
+
+# ── Dataset ───────────────────────────────────────────────────
+data:
+  # List of training data root directories (multiple roots are merged)
+  #
+  # Examples:
+  #   Original data only:
+  #     train_roots: [/path/to/REAL-PS4]
+  #
+  #   Augmented data only:
+  #     train_roots: [/path/to/aug_data]
+  #
+  #   Original + augmented (recommended):
+  #     train_roots:
+  #       - /path/to/REAL-PS4
+  #       - /path/to/aug_data
+  #
+  # Backward-compatible: train_root: <single path> is equivalent to train_roots: [<path>]
+  train_roots:
+    - /path/to/REAL-PS4
+    # - /path/to/aug_data
+
+  # Enabled datasets (comment out to skip)
+  datasets:
+    - CHiME6
+    - AMI
+    - AliMeeting
+    - AISHELL-4
+
+  # Dataset subdirectories relative to each root in train_roots
+  # Each dataset directory contains: mapping.csv, TRAIN/, enrolment_speakers/
+  chime6_subdir:     CHiME6
+  ami_subdir:        AMI
+  alimeeting_subdir: AliMeeting
+  aishell4_subdir:   AISHELL-4
+
+  # Audio parameters
+  sample_rate: 16000
+
+  # Maximum mixture length in samples (samples exceeding this are skipped at load time)
+  # Whisper processes at most 30 s (480,000 samples @ 16 kHz)
+  max_mix_len: 480000     # 30 s @ 16 kHz
+
+  # Maximum enrollment truncation length in samples (0 = no truncation)
+  max_enroll_len: 160000  # 10 s
+
+  # Skip samples whose transcript is shorter than this (in characters)
+  min_transcript_len: 2
+
+  # Maximum number of training samples (0 = use all; set a positive integer for quick sanity checks)
+  max_samples: 0
+
+# ── Training hyperparameters ──────────────────────────────────
+num_epochs: 50
+batch_size: 1            # Non-causal model has higher VRAM usage; start with batch_size=1
+num_workers: 4
+save_step_interval: 500  # Save a checkpoint every 500 steps
+max_keep_ckpts: 3        # Keep only the 3 most recent step checkpoints
+
+# Gradient clipping (prevents gradient explosion)
+clip_grad: 5.0
+
+# Logging interval (in steps)
+log_every: 100
+
+# ── Loss mode and weights ─────────────────────────────────────
+#
+# loss_mode controls which loss function(s) are used during training:
+#
+#   "ce"         → ASR cross-entropy loss only (Whisper teacher-forcing)
+#                  loss = ce_loss
+#                  Use when: optimizing transcription quality only
+#
+#   "similarity" → Speaker similarity ranking loss only
+#                  hinge(margin - (sim(tse,enroll) - sim(mix,enroll)))
+#                  Goal: TSE output must be more similar to enrollment than the mixture
+#                  loss = sim_loss
+#                  Use when: optimizing speaker purity without ASR
+#
+#   "combined"   → Weighted combination of all losses
+#                  loss = lambda_ce * ce_loss + lambda_sim * sim_loss
+#                        + lambda_vad * vad_loss + lambda_dnsmos * dnsmos_loss
+#                  Use when: jointly optimizing speech clarity and speaker separation
+#
+# Parameters:
+#   lambda_ce:  Weight for CE loss (combined mode only), default 1.0
+#   lambda_sim: Weight for speaker similarity ranking loss, default 0.5
+#   sim_margin: Hinge margin for ranking loss, default 0.2
+#               Meaning: require sim_out - sim_mix >= sim_margin
+#               Suggested range: 0.1 (loose) ~ 0.3 (strict)
+#
+# Note: similarity / combined modes automatically load the speaker similarity module.
+
+loss_mode: combined          # Options: ce | similarity | combined
+
+lambda_ce:  1.0        # CE loss weight (combined mode)
+lambda_sim: 0.5        # Speaker similarity ranking loss weight (similarity / combined mode)
+lambda_vad: 0.5        # Target speaker VAD loss weight (combined mode)
+sim_margin: 0.2        # Ranking loss hinge margin
+
+# ── Differentiable DNSMOS Loss ────────────────────────────────
+# Uses the same ONNX model as the evaluation pipeline to directly optimize the eval metric.
+# No reference audio required; the ref argument is interface-only and not used in computation.
+# ONNX models (sig_bak_ovr.onnx, model_v8.onnx) should be placed in dnsmos_model_dir.
+lambda_dnsmos: 0.3          # DNSMOS loss weight (set to 0 to disable)
+dnsmos_model_dir: /path/to/DNSMOS
+dnsmos_target: OVRL         # Optimization target: OVRL | SIG | BAK | P808
+
+# ── Target Speaker VAD Loss parameters ───────────────────────
+# VAD loss supervises the frame-level energy of the TSE output:
+#   - Frames where the target speaker is active  → output should have high energy
+#   - Frames where the target speaker is silent  → output should be near silence
+# Labels are loaded from TRAIN/target_activity_segments.jsonl in each dataset
+vad_frame_shift_ms:  10.0    # Frame shift in milliseconds (must match VAD label alignment)
+vad_frame_length_ms: 25.0    # Frame length in milliseconds
+
+# Legacy compatibility: lambda_spk > 0 is equivalent to combined mode with lambda_sim = lambda_spk
+# New training runs should use loss_mode + lambda_sim directly; this field can be ignored.
+lambda_spk: 0.0
+
+# ── Optimizer ─────────────────────────────────────────────────
+optimizer:
+  lr: 1.0e-5            # Small LR for fine-tuning from pretrained weights
+  weight_decay: 1.0e-5
+
+# ── LR Scheduler (ExponentialDecrease, consistent with wesep) ─
+scheduler_args:
+  initial_lr:    1.0e-5
+  final_lr:      1.0e-6
+  warm_up_epoch: 1
+  warm_from_zero: false
+  # num_epochs and epoch_iter are filled in automatically by the training script
