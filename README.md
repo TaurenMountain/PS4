@@ -43,7 +43,6 @@ Results on the official REAL-T challenge validation set. The ranking metric is a
 ├── resume_utils.py                   # Checkpoint resume utilities
 ├── run_train.sh                      # Training launcher (handles single/multi-GPU, resume/finetune)
 ├── inference.py                      # Self-contained inference script (no external ML libs needed)
-├── bsrnn_legacy.py                   # Legacy BSRNN model definition (standalone, for reference)
 ├── wesep_ps4/                        # [NEW] Minimal wesep + wespeaker dependency (no clone needed!)
 │   ├── wesep_real_tse/wesep/         #   - wesep: models, modules (norm, speaker, FiLM)
 │   └── wespeaker/wespeaker/          #   - wespeaker: ECAPA-TDNN speaker encoder
