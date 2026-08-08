@@ -42,12 +42,56 @@ Results on the official REAL-T challenge validation set. The ranking metric is a
 ├── train.py                          # Main training script (single-GPU & multi-GPU DDP)
 ├── resume_utils.py                   # Checkpoint resume utilities
 ├── run_train.sh                      # Training launcher (handles single/multi-GPU, resume/finetune)
+├── inference.py                      # Self-contained inference script (no external ML libs needed)
+├── bsrnn_legacy.py                   # Legacy BSRNN model definition (standalone, for reference)
+├── wesep_ps4/                        # [NEW] Minimal wesep + wespeaker dependency (no clone needed!)
+│   ├── wesep_real_tse/wesep/         #   - wesep: models, modules (norm, speaker, FiLM)
+│   └── wespeaker/wespeaker/          #   - wespeaker: ECAPA-TDNN speaker encoder
 └── configs/
     ├── config_bsrnn_ecapa_vox1.yaml  # PS4 training config (BSRNN + ECAPA-TDNN)
     └── config_tfmap_context_100.yaml # Alternative TF-Map model config
 ```
 
-## Dependencies
+## Inference (Quick Start)
+
+Download the model checkpoint from [TaurenMountain/PS4](https://huggingface.co/TaurenMountain/PS4) and use the included [`inference.py`](inference.py):
+
+```bash
+# Install dependencies
+pip install torch torchaudio numpy
+
+# Download checkpoint
+# wget https://huggingface.co/TaurenMountain/PS4/resolve/main/checkpoint_epoch037.pt
+
+# Single file extraction
+python inference.py \
+    --checkpoint checkpoint_epoch037.pt \
+    --mix mix.wav \
+    --enroll target_speaker.wav \
+    --output result.wav
+
+# Use GPU
+python inference.py \
+    --checkpoint checkpoint_epoch037.pt \
+    --mix mix.wav \
+    --enroll target.wav \
+    --output result.wav \
+    --device cuda
+
+# Batch mode
+python inference.py \
+    --checkpoint checkpoint_epoch037.pt \
+    --mix-dir ./mixtures/ \
+    --enroll-dir ./enrollments/ \
+    --output-dir ./results/ \
+    --device cuda
+```
+
+The [`inference.py`](inference.py) script is self-contained — it includes all model classes (BSRNN, ECAPA-TDNN, speaker fusion layers, etc.) and works with just `torch`, `torchaudio`, and `numpy`.
+
+## Training
+
+### Dependencies
 
 - Python 3.10+
 - PyTorch ≥ 2.0
@@ -61,18 +105,19 @@ Install:
 pip install torch torchaudio transformers pandas numpy pyyaml tqdm tensorboard
 ```
 
-The BSRNN model implementation is sourced from [wesep](https://github.com/wenet-e2e/wesep). Clone it alongside this repo:
-```bash
-git clone https://github.com/wenet-e2e/wesep REAL-TSE-Challenge/wesep_real_tse
-```
+### Model Definition
 
-## Quick Start
+The BSRNN model used for PS4 is the **legacy version** (`bsrnn_legacy.BSRNN`) with a flat config format, **not** the newer `bsrnn.BSRNN` in the public wesep repo.
 
-### 1. Prepare Data
+This repository includes a minimal [`wesep_ps4/`](wesep_ps4/) directory containing **only the files needed for PS4 training** — no need to clone the full wesep or wespeaker repos. The `run_train.sh` script automatically sets `PYTHONPATH` to point to `wesep_ps4/`. **No extra setup required.**
+
+### Quick Start
+
+#### 1. Prepare Data
 
 Download [TaurenMountain/REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4) and set `data.train_roots` in the config to point to your local copy.
 
-### 2. Edit Config
+#### 2. Edit Config
 
 Edit [`configs/config_bsrnn_ecapa_vox1.yaml`](configs/config_bsrnn_ecapa_vox1.yaml) to set:
 
@@ -88,7 +133,7 @@ data:
     - /path/to/REAL-PS4
 ```
 
-### 3. Train
+#### 3. Train
 
 **Single GPU:**
 ```bash
@@ -148,4 +193,3 @@ Set `loss_mode: ce | similarity | combined` in the config to select which losses
       primaryClass={cs.SD},
       url={https://arxiv.org/abs/2607.08111}, 
 }
-```

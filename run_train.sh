@@ -174,9 +174,10 @@ if ! command -v "$PYTHON" &>/dev/null; then
     exit 1
 fi
 
-# ── 环境变量：将 wesep 加入 PYTHONPATH ────────────────────────────────────
-WESEP_PATH="$SCRIPT_DIR/../REAL-TSE-Challenge/wesep_real_tse"
-export PYTHONPATH="$WESEP_PATH:${PYTHONPATH:-}"
+# ── 环境变量：将 wesep_ps4（wesep + wespeaker）加入 PYTHONPATH ────────────
+WESEP_PATH="$SCRIPT_DIR/wesep_ps4/wesep_real_tse"
+WESPEAKER_PATH="$SCRIPT_DIR/wesep_ps4/wespeaker"
+export PYTHONPATH="$WESEP_PATH:$WESPEAKER_PATH:${PYTHONPATH:-}"
 
 # ── 打印信息 ─────────────────────────────────────────────────────────────
 echo "============================================================"

@@ -57,11 +57,13 @@ from tqdm import tqdm
 from resume_utils import resolve_resume_epoch
 
 # ── wesep TSE model path ────────────────────────────────────────────────────
-# Add wesep_real_tse to sys.path, using wesep from REAL-TSE-Challenge
+# Add wesep_ps4 (wesep + wespeaker) to sys.path
 _SCRIPT_DIR = Path(__file__).resolve().parent
-_WESEP_PATH = _SCRIPT_DIR.parent / "REAL-TSE-Challenge" / "wesep_real_tse"
-if str(_WESEP_PATH) not in sys.path:
-    sys.path.insert(0, str(_WESEP_PATH))
+_WESEP_PATH = _SCRIPT_DIR / "wesep_ps4" / "wesep_real_tse"
+_WESPEAKER_PATH = _SCRIPT_DIR / "wesep_ps4" / "wespeaker"
+for _p in [_WESEP_PATH, _WESPEAKER_PATH]:
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 # Note: Whisper ASR is loaded via HuggingFace transformers, no need to inject openai-whisper path
 
