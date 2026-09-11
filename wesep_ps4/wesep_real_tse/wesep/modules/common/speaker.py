@@ -1,10 +1,11 @@
+
 from typing import Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from wesep_real_tse.wesep.modules.common import FiLM
+from wesep.modules.common import FiLM
 
 
 class PreEmphasis(torch.nn.Module):

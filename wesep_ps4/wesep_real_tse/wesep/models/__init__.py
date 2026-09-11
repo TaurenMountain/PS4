@@ -1,4 +1,4 @@
-import wesep_real_tse.wesep.models.bsrnn_legacy as bsrnn_legacy
+import wesep.models.bsrnn_legacy as bsrnn_legacy
 
 
 def get_model(model_name: str):

@@ -45,7 +45,7 @@ Results on the official REAL-T challenge validation set. The ranking metric is a
 ├── inference.py                      # Self-contained inference script (no external ML libs needed)
 ├── wesep_ps4/                        # [NEW] Minimal wesep + wespeaker dependency (no clone needed!)
 │   ├── wesep_real_tse/wesep/         #   - wesep: models, modules (norm, speaker, FiLM)
-│   └── wespeaker/wespeaker/          #   - wespeaker: ECAPA-TDNN speaker encoder
+│   └── wespeaker/wespeaker/          #   - wespeaker: ECAPA-TDNN + ResNet34 speaker encoders
 └── configs/
     ├── config_bsrnn_ecapa_vox1.yaml  # PS4 training config (BSRNN + ECAPA-TDNN)
     └── config_tfmap_context_100.yaml # Alternative TF-Map model config
