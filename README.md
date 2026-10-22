@@ -16,7 +16,7 @@ To support training, we construct **[REAL-PS4](https://huggingface.co/datasets/T
 - **Training dataset:** [TaurenMountain/REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4)
 
 ## 🔥 News
-
+- **2026-09**: Our paper was accepted to the SLT 2026 Challenge Track!
 - **2026-07**: PS4 ranks **2nd overall** on the [REAL-T Challenge](https://real-tse.github.io/challenge/) leaderboard, achieving the **best speaker similarity (SIM) and timing F1** among all submitted systems!
 - **2026-07**: Paper [*PS4: Proxy-Supervised Joint Training for Real Target Speaker Extraction*](https://arxiv.org/abs/2607.08111) uploaded to arXiv.
 - **2026-07**: Training code and [REAL-PS4](https://huggingface.co/datasets/TaurenMountain/REAL-PS4) dataset released.
