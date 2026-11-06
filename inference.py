@@ -725,17 +725,23 @@ def load_audio(path: str, target_sr: int = 16000) -> torch.Tensor:
     """Load audio at target sample rate.
 
     Returns:
-        Tensor of shape (1, T) — mono, normalized to [-1, 1].
+        Tensor of shape (1, T) — mono, float in [-1, 1] after int->float PCM
+        conversion by torchaudio.load (normalize=True by default).
+
+    NOTE:
+        Deliberately does NOT apply per-utterance peak normalization. The
+        training pipeline (train.py Dataset.__getitem__) only does
+        resample + mono + truncation and feeds raw [-1, 1] amplitudes to the
+        model. Applying `wav / wav.abs().max()` here would shift the input
+        amplitude distribution and create a train/inference mismatch (most
+        notably for the internal speaker encoder). Keep this consistent with
+        training.
     """
-    wav, sr = torchaudio.load(path)
+    wav, sr = torchaudio.load(path)  # normalize=True -> int PCM scaled to [-1, 1]
     if wav.size(0) > 1:
         wav = wav.mean(dim=0, keepdim=True)  # mono
     if sr != target_sr:
         wav = torchaudio.functional.resample(wav, sr, target_sr)
-    # Normalize
-    peak = wav.abs().max()
-    if peak > 0:
-        wav = wav / peak
     return wav
 
 
